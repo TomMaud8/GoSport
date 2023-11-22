@@ -1,37 +1,39 @@
+//IMPORTING MODULES
 import express from "express";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-//Midlewear tool for parsing data
+import axios from "axios";
 import bodyParser from "body-parser";
-import morgan from "morgan";
 
+
+//DECLARING CONSTANT VARIABLES
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
 const app = express();
 const port = 3000;
+//Ticketmaster API URL & key
+const TICKETMASTERURL = "https://app.ticketmaster.com/discovery/v2/"; 
+const TICKETMASTERKEY = "hPGH31HmTxubOYDB8LmbiZcBRi2UHLhG";
 
-//Custom middlewear function
-function logger(req, res, next) {
-    console.log("Request Method: ", req.method);
-    console.log("Request Method: ", req.url);
-    next();
-}
-
-//Enabling the middlewear
-//app.use(bodyParser.urlencoded({ extended: true}));
-//app.use(morgan("tiny"));
-app.use(logger);
-
-//Use static partials from the public folder
+//ENABLING MIDDLEWARE
+app.use(bodyParser.urlencoded({ extended: true}));
+//Serve the static files from the public folder location using the built-in static middleware
 app.use(express.static("public"));
 
 //In this case just retreiving request response from root path
-app.get("/", (req, res) => {
-    //res.sendFile(__dirname + "/index.html");
-    res.render("index.ejs", {
-        title: "GoSport", 
-        creator: "Tom Maudling",
-    });
+app.get("/", async (req, res) => {
+    try {
+        const result = await axios.get(TICKETMASTERURL + "/events.json", {
+            params: {
+                countryCode: "CZ",
+                classificationName: "sport",
+                apikey: TICKETMASTERKEY,
+            },
+        });
+        console.log(JSON.stringify(result.data));
+        res.send(`<h1>${JSON.stringify(result.data)}</h1>`);
+    } catch (error) {
+        res.status(404).send("Error", error.message);
+    }
 });
 
 app.get("/Czechia", (req, res) => {
